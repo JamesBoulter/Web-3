@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Netlify Form Detector</title>
+  </head>
+  <body>
+    <form name="artist-application" method="POST" netlify netlify-honeypot="bot-field" hidden>
+      <input type="hidden" name="form-name" value="artist-application" />
+      <input name="bot-field" />
+      <input name="name" />
+      <input name="email" />
+      <input name="category" />
+      <input name="starting_price" />
+      <input name="portfolio" />
+      <input name="payout_email" />
+      <textarea name="bio"></textarea>
+      <input name="rights_confirmed" />
+      <input name="payouts_ready" />
+      <input name="subject" />
+    </form>
+
+    <form name="commission-request" method="POST" netlify netlify-honeypot="commission-bot-field" hidden>
+      <input type="hidden" name="form-name" value="commission-request" />
+      <input name="commission-bot-field" />
+      <input name="artist" />
+      <input name="commission_type" />
+      <input name="name" />
+      <input name="email" />
+      <input name="usage" />
+      <input name="reply_preference" />
+      <textarea name="brief"></textarea>
+      <input name="budget_slider" />
+      <input name="budget" />
+      <input name="deadline" />
+      <input name="reference_link" />
+      <input name="rush_delivery" />
+      <input name="subject" />
+    </form>
+  </body>
+</html>
