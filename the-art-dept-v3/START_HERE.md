@@ -123,6 +123,8 @@ Your live Netlify site URL, like:
 
 `https://your-site-name.netlify.app`
 
+If Stripe checkout sends buyers back to an older version of the site, this value is probably old. Update `SITE_URL`, redeploy, and make sure you are buying from the current live domain.
+
 Later, after the Stripe webhook is created, add:
 
 `STRIPE_WEBHOOK_SECRET`
@@ -162,6 +164,12 @@ In Stripe Dashboard:
 
 7. Redeploy.
 
+If a buyer pays but the order stays pending, open Stripe Dashboard > Developers > Webhooks > your endpoint > Event deliveries. Successful deliveries should show a 200 response.
+
+The app also checks Stripe again when the buyer returns from checkout, so most card payments should update immediately even if the webhook is delayed.
+
+There is also a `Sync Stripe payments` button on order and sales tables. Use it if an older pending order needs the site to re-check Stripe.
+
 ## Testing Order
 
 1. Deploy V3.
@@ -180,6 +188,8 @@ In Stripe Dashboard:
 `4242 4242 4242 4242`
 
 Use any future expiration date and any CVC.
+
+After checkout returns to the site, Dashboard > Orders should show the order as paid. The artist's real bank payout can still take days, especially for a first Stripe payout.
 
 ## Important
 

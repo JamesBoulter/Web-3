@@ -15,11 +15,11 @@ function stripe() {
 }
 
 function siteUrl(event) {
-  const configured = process.env.SITE_URL || process.env.URL || process.env.DEPLOY_PRIME_URL;
-  if (configured) return configured.replace(/\/$/, '');
-  const host = event.headers.host || event.headers.Host;
+  const host = event.headers['x-forwarded-host'] || event.headers['X-Forwarded-Host'] || event.headers.host || event.headers.Host;
   const proto = event.headers['x-forwarded-proto'] || event.headers['X-Forwarded-Proto'] || 'https';
-  return host ? proto + '://' + host : 'http://localhost:8888';
+  if (host) return (proto + '://' + host).replace(/\/$/, '');
+  const configured = process.env.SITE_URL || process.env.URL || process.env.DEPLOY_PRIME_URL;
+  return configured ? configured.replace(/\/$/, '') : 'http://localhost:8888';
 }
 
 function amountToCents(value) {

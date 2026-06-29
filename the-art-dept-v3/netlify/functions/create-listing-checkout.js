@@ -94,7 +94,7 @@ exports.handler = async (event) => {
         listing_id: listing.id,
         artist_id: listing.artist_id
       },
-      success_url: root + '/?payment=success&order=' + encodeURIComponent(order.id),
+      success_url: root + '/?payment=success&session_id={CHECKOUT_SESSION_ID}&order=' + encodeURIComponent(order.id),
       cancel_url: root + '/?payment=cancelled'
     });
 

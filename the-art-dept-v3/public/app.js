@@ -861,9 +861,13 @@ function renderSupportTable() {
 }
 
 function renderOrdersTable(orders, title) {
+  const hasPending = orders.some((order) => order.status === 'pending');
   return `
     <section class="table-wrap">
-      <h2>${escapeHtml(title)}</h2>
+      <div class="split-head">
+        <h2>${escapeHtml(title)}</h2>
+        ${hasPending ? '<button class="secondary compact" data-sync-payments>' + icon('i-refresh') + 'Sync Stripe payments</button>' : ''}
+      </div>
       ${orders.length ? '<table><thead><tr><th>Status</th><th>Listing</th><th>Artist</th><th>Amount</th><th>Deliverable</th><th>Date</th><th>Actions</th></tr></thead><tbody>' +
         orders.map(renderOrderRow).join('') +
       '</tbody></table>' : renderEmpty('No orders yet', 'Orders appear here after checkout.')}
@@ -1280,6 +1284,22 @@ async function buyListing(id) {
   location.href = data.url;
 }
 
+async function syncCheckoutSession(sessionId, orderId) {
+  return callFunction('/.netlify/functions/sync-checkout-session', { sessionId, orderId });
+}
+
+async function syncPendingOrders(showResult = true) {
+  const data = await callFunction('/.netlify/functions/sync-pending-orders');
+  if (showResult) {
+    if (data.updated) {
+      showToast(data.updated + ' paid order' + (data.updated === 1 ? '' : 's') + ' updated.');
+    } else {
+      showToast('No new paid orders found yet.');
+    }
+  }
+  return data;
+}
+
 async function startPayout() {
   const data = await callFunction('/.netlify/functions/stripe-connect-start');
   location.href = data.url;
@@ -1454,6 +1474,7 @@ function bindEvents() {
     const payout = event.target.closest('[data-start-payout]');
     const payoutStatus = event.target.closest('[data-check-payout]');
     const payoutDashboard = event.target.closest('[data-open-payout-dashboard]');
+    const syncPayments = event.target.closest('[data-sync-payments]');
     const download = event.target.closest('[data-download-image]');
     const remove = event.target.closest('[data-remove-listing]');
     const editListingButton = event.target.closest('[data-edit-listing]');
@@ -1518,6 +1539,10 @@ function bindEvents() {
       if (payout) await startPayout();
       if (payoutStatus) await checkPayout();
       if (payoutDashboard) await openPayoutDashboard();
+      if (syncPayments) {
+        await syncPendingOrders();
+        await refreshAll();
+      }
       if (download) await downloadImage(download.dataset.downloadImage, download.dataset.downloadTitle);
       if (remove) await removeListing(remove.dataset.removeListing);
       if (editListingButton) editListing(editListingButton.dataset.editListing);
@@ -1620,7 +1645,26 @@ async function init() {
   if (params.get('payment') === 'success') {
     state.view = 'dashboard';
     state.dashboardTab = 'orders';
-    showToast('Payment complete. Your download is in Orders.');
+    const sessionId = params.get('session_id');
+    const orderId = params.get('order');
+    if (sessionId) {
+      try {
+        const result = await syncCheckoutSession(sessionId, orderId);
+        showToast(result.status === 'paid' ? 'Payment complete. Your download is in Orders.' : 'Payment received. Stripe is still processing it.');
+      } catch (_error) {
+        showToast('Payment returned. Refreshing order status.');
+      }
+    } else if (orderId && state.session) {
+      try {
+        await syncPendingOrders(false);
+        showToast('Payment returned. Refreshing order status.');
+      } catch (_error) {
+        showToast('Payment complete. Your download is in Orders.');
+      }
+    } else {
+      showToast('Payment complete. Your download is in Orders.');
+    }
+    if (history.replaceState) history.replaceState({}, document.title, location.pathname);
   }
   if (params.get('stripe') === 'return') showToast('Stripe returned you to the dashboard. Check payout status.');
   await refreshAll();
